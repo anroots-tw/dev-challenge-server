@@ -1,0 +1,25 @@
+{
+  "name": "dev-challenge-server",
+  "version": "1.0.0",
+  "description": "tasks for developers in the browser console",
+  "main": "devChallenge.js",
+  "dependencies": {
+    "body-parser": "^1.14.1",
+    "express": "^4.13.3",
+    "express-session": "^1.12.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/transferwise/dev-challenge-server.git"
+  },
+  "author": "TransferWise",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/transferwise/dev-challenge-server/issues"
+  },
+  "homepage": "https://github.com/transferwise/dev-challenge-server#readme"
+}
