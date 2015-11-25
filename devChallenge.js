@@ -26,7 +26,7 @@ module.exports = {
 
         // challenges
         for(let task of config.tasks) {
-            app.use(`${config.taskRemote}/${task}` , express.static(`${config.taskRoot}/${task}/front.js`));
+            app.use(`${config.taskRemote}/${task}.js` , express.static(`${config.taskRoot}/${task}/front.js`));
             app.get(`${config.taskRemote}/${task}/data` , function(req, res) {
                 let generator = require(`${config.taskRoot}/${task}/data`);
                 let data = {};
