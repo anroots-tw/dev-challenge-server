@@ -26,9 +26,9 @@ module.exports = {
 
         // challenges
         for(let task of config.tasks) {
-            app.use(`${config.taskRemote}/${task}` , express.static(`${__dirname}/${config.taskRoot}/${task}/front.js`));
+            app.use(`${config.taskRemote}/${task}` , express.static(`${config.taskRoot}/${task}/front.js`));
             app.get(`${config.taskRemote}/${task}/data` , function(req, res) {
-                let generator = require(`${__dirname}/${config.taskRoot}/${task}/data`);
+                let generator = require(`${config.taskRoot}/${task}/data`);
                 let data = {};
                 if(typeof generator == 'function') {
                     data = generator(req);
@@ -49,7 +49,7 @@ module.exports = {
 
             let task = req.body.task || config.tasks[0];
             let nextIndex = config.tasks.indexOf(task) + 1;
-            let taskManager = require(`${__dirname}/${config.taskRoot}/${task}/back`);
+            let taskManager = require(`${config.taskRoot}/${task}/back`);
             let response = taskManager.check(req.body.answer, req.session.lastData, req, res);
 
             if(response === true) {
@@ -73,7 +73,7 @@ module.exports = {
                 });
             }
             for(let task of config.tasks) {
-                let taskManager = require(`${__dirname}/${config.taskRoot}/${task}/back`);
+                let taskManager = require(`${config.taskRoot}/${task}/back`);
 
                 if(taskManager.keyWord.toLowerCase() == keyword.toLowerCase()) {
                     return res.json({
