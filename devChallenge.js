@@ -27,14 +27,14 @@ module.exports = {
         // challenges
         for(let task of config.tasks) {
             app.use(`${config.taskRemote}/${task}.js` , express.static(`${config.taskRoot}/${task}/front.js`));
-            app.get(`${config.taskRemote}/${task}/data` , function(req, res) {
+            app.get(`${config.taskRemote}/${task}/data.js` , function(req, res) {
                 let generator = require(`${config.taskRoot}/${task}/data`);
                 let data = {};
                 if(typeof generator == 'function') {
                     data = generator(req);
                 }
                 req.session.lastData = data;
-                res.json(data);
+                res.send(jsWrapper(data));
             });
         }
 
@@ -89,3 +89,8 @@ module.exports = {
         return app;
     }
 };
+
+function jsWrapper(data) {
+    let json = JSON.stringify(data);
+    return `define([], function() {return ${json}})`;
+}
