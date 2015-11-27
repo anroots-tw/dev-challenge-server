@@ -33,7 +33,8 @@ module.exports = {
                 if(typeof generator == 'function') {
                     data = generator(req);
                 }
-                req.session.lastData = data;
+                req.session.data || (req.session.data = {});
+                req.session.data[task] = data;
                 res.send(jsWrapper(data));
             });
         }
@@ -47,10 +48,12 @@ module.exports = {
                 });
             }
 
+            req.session.data || (req.session.data = {});
+
             let task = req.body.task || config.tasks[0];
             let nextIndex = config.tasks.indexOf(task) + 1;
             let taskManager = require(`${config.taskRoot}/${task}/back`);
-            let response = taskManager.check(req.body.answer, req.session.lastData, req, res);
+            let response = taskManager.check(req.body.answer, req.session.data[task], req, res);
 
             if(response === true) {
                 return res.json({
