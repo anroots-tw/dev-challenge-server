@@ -31,7 +31,7 @@ module.exports = {
                 let generator = require(`${config.taskRoot}/${task}/data`);
                 let data = {};
                 if(typeof generator == 'function') {
-                    data = generator(req);
+                    data = generator(req, res);
                 }
                 req.session.data || (req.session.data = {});
                 req.session.data[task] = data;
