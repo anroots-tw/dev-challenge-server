@@ -28,42 +28,74 @@ module.exports = {
         for(let task of config.tasks) {
             app.use(`${config.taskRemote}/${task}.js` , express.static(`${config.taskRoot}/${task}/front.js`));
             app.get(`${config.taskRemote}/${task}/data.js` , function(req, res) {
-                let generator = require(`${config.taskRoot}/${task}/data`);
-                let data = {};
-                if(typeof generator == 'function') {
-                    data = generator(req, res);
+                try {
+                    let generator = require(`${config.taskRoot}/${task}/data`);
+                    let data = {};
+                    if(typeof generator == 'function') {
+                        data = generator(req, res);
+                    }
+                    req.session.data || (req.session.data = {});
+                    req.session.data[task] = data;
+                    res.send(jsWrapper(data));
+                } catch(exception) {
+                    if(config.onDataError) {
+                        config.onDataError(exception, req, res);
+                    } else {
+                        console.error(exception);
+                        if(exception.code && exception.code == 'MODULE_NOT_FOUND') {
+                            res.sendStatus(404);
+                        } else {
+                            res.sendStatus(500);
+                        }
+                    }
                 }
-                req.session.data || (req.session.data = {});
-                req.session.data[task] = data;
-                res.send(jsWrapper(data));
             });
         }
 
         // routing
         let urlencodedParser = bodyParser.urlencoded({ extended: true });
         app.post(`${config.apiRoot}/check`, urlencodedParser, function (req, res) {
-            if(!req.body.answer) {
-                return res.json({
-                    error: "no answer defined"
-                });
-            }
+            try {
+                if(!req.body.answer) {
+                    return res.json({
+                        error: "no answer defined"
+                    });
+                }
 
-            req.session.data || (req.session.data = {});
+                req.session.data || (req.session.data = {});
 
-            let task = req.body.task || config.tasks[0];
-            let nextIndex = config.tasks.indexOf(task) + 1;
-            let taskManager = require(`${config.taskRoot}/${task}/back`);
-            let response = taskManager.check(req.body.answer, req.session.data[task], req, res);
+                let task = req.body.task || config.tasks[0];
+                let nextIndex = config.tasks.indexOf(task) + 1;
+                let taskManager = require(`${config.taskRoot}/${task}/back`);
 
-            if(response === true) {
-                return res.json({
-                    next: config.tasks[nextIndex],
-                    keyWord : taskManager.keyWord
-                });
-            } else {
-                return res.json({
-                    error: response
-                });
+                // check if data is present
+                if(taskManager.dataRequired && typeof req.session.data[task] === 'undefined') {
+                    return res.json({
+                        error: "Lost session? Can't access data."
+                    });
+                }
+
+                let response = taskManager.check(req.body.answer, req.session.data[task], req, res);
+
+                if(response === true) {
+                    config.onSuccess && config.onSuccess(task, answer, req, res);
+                    return res.json({
+                        next: config.tasks[nextIndex],
+                        keyWord : taskManager.keyWord
+                    });
+                } else {
+                    config.onFailure && config.onFailure(task, answer, req, res);
+                    return res.json({
+                        error: response
+                    });
+                }
+            } catch(exception) {
+                if(config.onError) {
+                    config.onError(exception, req, res);
+                } else {
+                    console.error(exception);
+                    res.sendStatus(500);
+                }
             }
         });
 
@@ -79,11 +111,13 @@ module.exports = {
                 let taskManager = require(`${config.taskRoot}/${task}/back`);
 
                 if(taskManager.keyWord.toLowerCase() == keyword.toLowerCase()) {
+                    config.onJumpTo && config.onJumpTo(task, req, res);
                     return res.json({
                         next: task
                     });
                 }
             }
+            config.onWrongKeword && config.onWrongKeword(task, keyword, req, res);
             return res.json({
                 error: 'unknown keyword!'
             });
