@@ -1,8 +1,10 @@
 "use strict";
 
 module.exports = {
+    load : require,
+
     data : function(config, task, req, res) {
-        let generator = require(`${config.taskRoot}/${task}/data`);
+        let generator = this.load(`${config.taskRoot}/${task}/data`);
         let data = {};
         if(typeof generator == 'function') {
             data = generator(req, res);
@@ -23,7 +25,7 @@ module.exports = {
 
         let task = req.body.task || config.tasks[0];
         let nextIndex = config.tasks.indexOf(task) + 1;
-        let taskManager = require(`${config.taskRoot}/${task}/back`);
+        let taskManager = this.load(`${config.taskRoot}/${task}/back`);
 
         // check if data is present
         if(taskManager.dataRequired && typeof req.session.data[task] === 'undefined') {
