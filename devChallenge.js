@@ -3,6 +3,7 @@
 // var config = require(config);
 var express = require('express');
 var bodyParser = require('body-parser');
+var endPoints = require('./endPoints');
 
 module.exports = {
     spinUp : function(config, _app) {
@@ -29,14 +30,7 @@ module.exports = {
             app.use(`${config.taskRemote}/${task}.js` , express.static(`${config.taskRoot}/${task}/front.js`));
             app.get(`${config.taskRemote}/${task}/data.js` , function(req, res) {
                 try {
-                    let generator = require(`${config.taskRoot}/${task}/data`);
-                    let data = {};
-                    if(typeof generator == 'function') {
-                        data = generator(req, res);
-                    }
-                    req.session.data || (req.session.data = {});
-                    req.session.data[task] = data;
-                    res.send(jsWrapper(data));
+                    endPoints.data(config, task, req, res);
                 } catch(exception) {
                     if(config.onDataError) {
                         config.onDataError(exception, req, res);
@@ -56,39 +50,7 @@ module.exports = {
         let urlencodedParser = bodyParser.urlencoded({ extended: true });
         app.post(`${config.apiRoot}/check`, urlencodedParser, function (req, res) {
             try {
-                if(!req.body.answer) {
-                    return res.json({
-                        error: "no answer defined"
-                    });
-                }
-
-                req.session.data || (req.session.data = {});
-
-                let task = req.body.task || config.tasks[0];
-                let nextIndex = config.tasks.indexOf(task) + 1;
-                let taskManager = require(`${config.taskRoot}/${task}/back`);
-
-                // check if data is present
-                if(taskManager.dataRequired && typeof req.session.data[task] === 'undefined') {
-                    return res.json({
-                        error: "Lost session? Can't access data."
-                    });
-                }
-
-                let response = taskManager.check(req.body.answer, req.session.data[task], req, res);
-
-                if(response === true) {
-                    config.onSuccess && config.onSuccess(task, answer, req, res);
-                    return res.json({
-                        next: config.tasks[nextIndex],
-                        keyWord : taskManager.keyWord
-                    });
-                } else {
-                    config.onFailure && config.onFailure(task, answer, req, res);
-                    return res.json({
-                        error: response
-                    });
-                }
+                endPoints.check(config, req, res);
             } catch(exception) {
                 if(config.onError) {
                     config.onError(exception, req, res);
@@ -100,34 +62,18 @@ module.exports = {
         });
 
         app.get(`${config.apiRoot}/jumpTo`, function(req, res) {
-            let keyword = req.query.keyword;
-
-            if(!keyword) {
-                return res.json({
-                    error: 'missing keyword!'
-                });
-            }
-            for(let task of config.tasks) {
-                let taskManager = require(`${config.taskRoot}/${task}/back`);
-
-                if(taskManager.keyWord.toLowerCase() == keyword.toLowerCase()) {
-                    config.onJumpTo && config.onJumpTo(task, req, res);
-                    return res.json({
-                        next: task
-                    });
+            try {
+                endPoints.jumpTo(config, req, res);
+            } catch(exception) {
+                if(config.onError) {
+                    config.onError(exception, req, res);
+                } else {
+                    console.error(exception);
+                    res.sendStatus(500);
                 }
             }
-            config.onWrongKeword && config.onWrongKeword(task, keyword, req, res);
-            return res.json({
-                error: 'unknown keyword!'
-            });
         });
 
         return app;
     }
 };
-
-function jsWrapper(data) {
-    let json = JSON.stringify(data);
-    return `define([], function() {return ${json}})`;
-}
