@@ -52,6 +52,7 @@ module.exports = {
 
     jumpTo : function(config, req, res) {
         let keyword = req.query.keyword;
+        let found;
 
         if(!keyword) {
             return res.json({
@@ -59,14 +60,20 @@ module.exports = {
             });
         }
         for(let task of config.tasks) {
-            let taskManager = require(`${config.taskRoot}/${task}/back`);
+            let taskManager = this.load(`${config.taskRoot}/${task}/back`);
 
-            if(taskManager.keyWord.toLowerCase() == keyword.toLowerCase()) {
-                config.onJumpTo && config.onJumpTo(task, req, res);
-                return res.json({
-                    next: task
-                });
+            if(found) {
+                found = task;
+                break;
+            } else if(taskManager.keyWord.toLowerCase() == keyword.toLowerCase()) {
+                found = true;
             }
+        }
+        if(found) {
+            config.onJumpTo && config.onJumpTo(found, req, res);
+            return res.json({
+                next: found
+            });
         }
         config.onWrongKeword && config.onWrongKeword(task, keyword, req, res);
         return res.json({

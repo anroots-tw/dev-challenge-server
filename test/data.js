@@ -1,6 +1,6 @@
 var assert = require('assert');
 var endPoints = require('../endPoints');
-var mock = require('../mock');
+var mock = require('../mock')();
 
 describe('data endpoint', function() {
     it('should use config to load generator', function() {

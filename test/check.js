@@ -1,14 +1,16 @@
 var assert = require('assert');
 var endPoints = require('../endPoints');
-var mock = require('../mock');
-
-var taskManager = {};
-endPoints.load = function(path) {
-    return taskManager;
-};
-
+var mock = require('../mock')();
 
 describe('check endpoint', function() {
+    // initialize
+    var taskManager = {};
+    before(function() {
+        endPoints.load = function(path) {
+            return taskManager;
+        };
+    });
+
     it('throws an error when no answer provided', function() {
         endPoints.check(
             { taskRoot : 'taskRoot' },
