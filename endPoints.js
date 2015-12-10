@@ -52,7 +52,7 @@ module.exports = {
 
     jumpTo : function(config, req, res) {
         let keyword = req.query.keyword;
-        let found;
+        let found, nextTask;
 
         if(!keyword) {
             return res.json({
@@ -63,16 +63,16 @@ module.exports = {
             let taskManager = this.load(`${config.taskRoot}/${task}/back`);
 
             if(found) {
-                found = task;
+                nextTask = task;
                 break;
             } else if(taskManager.keyWord.toLowerCase() == keyword.toLowerCase()) {
                 found = true;
             }
         }
-        if(found) {
-            config.onJumpTo && config.onJumpTo(found, req, res);
+        if(nextTask) {
+            config.onJumpTo && config.onJumpTo(nextTask, req, res);
             return res.json({
-                next: found
+                next: nextTask
             });
         }
         config.onWrongKeword && config.onWrongKeword(task, keyword, req, res);
