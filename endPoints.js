@@ -83,6 +83,6 @@ module.exports = {
 
     jsWrapper : function(data) {
         let json = JSON.stringify(data);
-        return `define([], function() {return ${json}})`;
+        return `devDefine([], function() {return ${json}})`;
     }
 };
