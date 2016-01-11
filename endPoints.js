@@ -24,6 +24,7 @@ module.exports = {
         req.session.data || (req.session.data = {});
 
         let task = req.body.task || config.tasks[0];
+        let answer = req.body.answer;
         let nextIndex = config.tasks.indexOf(task) + 1;
         let taskManager = this.load(`${config.taskRoot}/${task}/back`);
 
